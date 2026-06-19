@@ -5,13 +5,22 @@ import { Client, DashboardData, Invoice, InvoiceStatus } from './models';
 
 const BASE = '/api';
 
+export interface AuthUser { id: string; email: string; name?: string; }
+export interface AuthResponse { token: string; user: AuthUser; }
+
 @Injectable({ providedIn: 'root' })
 export class ApiService {
   private http = inject(HttpClient);
 
   // Auth
-  login(password: string): Observable<{ token: string }> {
-    return this.http.post<{ token: string }>(`${BASE}/auth/login`, { password });
+  login(email: string, password: string): Observable<AuthResponse> {
+    return this.http.post<AuthResponse>(`${BASE}/auth/login`, { email, password });
+  }
+  register(email: string, password: string, name: string): Observable<AuthResponse> {
+    return this.http.post<AuthResponse>(`${BASE}/auth/register`, { email, password, name });
+  }
+  me(): Observable<AuthUser> {
+    return this.http.get<AuthUser>(`${BASE}/auth/me`);
   }
 
   // Dashboard

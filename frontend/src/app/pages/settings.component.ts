@@ -37,6 +37,7 @@ import { ApiService } from '../core/api.service';
           <v-card>
             <v-section-title>Profil entreprise</v-section-title>
             <div class="fields">
+              <div><label class="v-label">Votre nom</label><input class="v-input" [(ngModel)]="p.ownerName" placeholder="Prénom Nom" /></div>
               <div><label class="v-label">Raison sociale</label><input class="v-input" [(ngModel)]="p.raisonSociale" /></div>
               <div><label class="v-label">SIRET</label><input class="v-input" [(ngModel)]="p.siret" /></div>
               <div><label class="v-label">Email de facturation</label><input class="v-input" [(ngModel)]="p.email" /></div>
@@ -81,7 +82,7 @@ export class SettingsComponent {
     { key: 'dark', label: 'Sombre', icon: 'moon' },
   ];
 
-  p = { raisonSociale: 'Studio Vaulty', siret: '902 118 334 00018', email: 'compta@studio-vaulty.fr', regimeTva: 'Réel normal', devise: 'EUR (€)' };
+  p = { raisonSociale: '', siret: '', email: '', regimeTva: '', devise: 'EUR (€)', ownerName: '' };
   saved = signal(false);
 
   toggles = signal([

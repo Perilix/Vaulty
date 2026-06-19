@@ -5,7 +5,7 @@ Application web de suivi de factures et de comptabilité (tableau de bord, factu
 - **Frontend** : Angular 19 (standalone + signals) — design porté depuis `design_handoff_vaulty/`
 - **Backend** : Node + Express + TypeScript, API REST
 - **Base de données** : PostgreSQL
-- **Auth** : connexion par mot de passe (JWT)
+- **Auth** : inscription + connexion par email/mot de passe (JWT, bcrypt) — **chaque utilisateur a sa propre compta isolée**
 - **Déploiement** : Docker → Render
 
 ## Architecture
@@ -36,7 +36,7 @@ docker compose up -d --build
 ```
 
 L'app est sur **http://localhost:8080** (le front nginx ; il proxifie l'API).
-Mot de passe par défaut : `vaulty`. L'API est aussi accessible en direct sur :3000, Postgres sur :5433.
+Ouvre l'app, **crée un compte** (page Inscription), puis connecte-toi. L'API est aussi sur :3000, Postgres sur :5433.
 
 ### Option B — dev avec rechargement à chaud
 
@@ -48,8 +48,7 @@ docker compose up -d db
 cd backend
 cp .env.example .env        # ajuster si besoin (DATABASE_URL pointe sur localhost:5433)
 npm install
-npm run seed                # crée le schéma + données de démo
-npm run dev
+npm run dev                 # applique le schéma automatiquement au démarrage
 
 # 3. Frontend (port 4200, proxy /api -> :3000)
 cd ../frontend
@@ -57,7 +56,7 @@ npm install
 npm start
 ```
 
-Frontend de dev : http://localhost:4200
+Frontend de dev : http://localhost:4200 (crée un compte pour commencer)
 
 ## Variables d'environnement (backend)
 

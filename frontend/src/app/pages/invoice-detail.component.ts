@@ -127,12 +127,13 @@ export class InvoiceDetailComponent {
   }
 
   steps = computed(() => {
-    const paid = this.iv()?.statut === 'paid';
+    const inv = this.iv();
+    const paid = inv?.statut === 'paid';
+    const sent = inv?.statut !== 'draft';
     return [
-      { label: 'Facture créée', done: true, date: frDate(this.iv()?.issued_on) },
-      { label: 'Envoyée au client', done: true, date: frDate(this.iv()?.issued_on) },
-      { label: 'Vue par le client', done: true, date: '04 juin' },
-      { label: 'Paiement reçu', done: paid, date: paid ? '12 juin' : 'En attente' },
+      { label: 'Facture créée', done: true, date: frDate(inv?.issued_on) },
+      { label: 'Envoyée au client', done: sent, date: sent ? frDate(inv?.issued_on) : 'Brouillon' },
+      { label: 'Paiement reçu', done: paid, date: paid ? 'Reçu' : 'En attente' },
     ];
   });
 

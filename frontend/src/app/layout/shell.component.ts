@@ -112,8 +112,9 @@ export class ShellComponent {
         this.retardNb.set(Number(d.kpis['retardNb']) || 0);
       }
     });
+    this.ownerName.set(this.auth.user()?.name || '');
     this.api.profile().subscribe((p) => {
-      this.ownerName.set(p?.['ownerName'] || '');
+      this.ownerName.set(p?.['ownerName'] || this.auth.user()?.name || '');
       this.company.set(p?.['raisonSociale'] || '');
     });
   }

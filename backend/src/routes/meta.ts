@@ -1,23 +1,29 @@
 import { Router } from 'express';
 import { query } from '../db.js';
+import { uid } from '../auth.js';
 
 export const metaRouter = Router();
 
-async function setting<T = any>(key: string): Promise<T | null> {
-  const [row] = await query<{ value: T }>(`SELECT value FROM app_settings WHERE key = $1`, [key]);
+async function setting<T = any>(userId: string, key: string): Promise<T | null> {
+  const [row] = await query<{ value: T }>(
+    `SELECT value FROM app_settings WHERE user_id = $1 AND key = $2`,
+    [userId, key],
+  );
   return row ? row.value : null;
 }
 
 const MONTHS_FR = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
 
 // KPIs + listes pour le tableau de bord — calculés depuis les vraies factures
-metaRouter.get('/dashboard', async (_req, res) => {
-  // Toutes les factures avec leur HT (somme des lignes)
+metaRouter.get('/dashboard', async (req, res) => {
+  // Toutes les factures de l'utilisateur avec leur HT (somme des lignes)
   const rows = await query<{ id: string; statut: string; issued_on: string | null; tva_rate: string; ht: string }>(
     `SELECT i.id, i.statut, i.issued_on, i.tva_rate,
             COALESCE(SUM(l.qty * l.unit_price), 0) AS ht
        FROM invoices i LEFT JOIN invoice_lines l ON l.invoice_id = i.id
+      WHERE i.user_id = $1
       GROUP BY i.id`,
+    [uid(req)],
   );
 
   const ttcOf = (r: any) => Number(r.ht) * (1 + Number(r.tva_rate) / 100);
@@ -54,10 +60,11 @@ metaRouter.get('/dashboard', async (_req, res) => {
     `SELECT i.id, i.client_name, i.due_on, i.statut,
             COALESCE(SUM(l.qty * l.unit_price), 0) AS ht
        FROM invoices i LEFT JOIN invoice_lines l ON l.invoice_id = i.id
-      WHERE i.statut IN ('pending','overdue')
+      WHERE i.user_id = $1 AND i.statut IN ('pending','overdue')
       GROUP BY i.id
       ORDER BY i.due_on ASC NULLS LAST
       LIMIT 5`,
+    [uid(req)],
   );
 
   res.json({
@@ -75,15 +82,15 @@ metaRouter.get('/dashboard', async (_req, res) => {
   });
 });
 
-metaRouter.get('/profile', async (_req, res) => {
-  res.json((await setting('profile')) ?? {});
+metaRouter.get('/profile', async (req, res) => {
+  res.json((await setting(uid(req), 'profile')) ?? {});
 });
 
 metaRouter.put('/profile', async (req, res) => {
   await query(
-    `INSERT INTO app_settings (key, value) VALUES ('profile', $1)
-     ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value`,
-    [JSON.stringify(req.body ?? {})],
+    `INSERT INTO app_settings (user_id, key, value) VALUES ($1, 'profile', $2)
+     ON CONFLICT (user_id, key) DO UPDATE SET value = EXCLUDED.value`,
+    [uid(req), JSON.stringify(req.body ?? {})],
   );
   res.json(req.body ?? {});
 });

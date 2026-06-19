@@ -2,6 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { CardComponent, KpiCardComponent, BtnComponent, AvatarComponent, SectionTitleComponent } from '../shared/ui';
 import { AreaChartComponent } from '../shared/area-chart.component';
 import { ApiService } from '../core/api.service';
+import { AuthService } from '../core/auth.service';
 import { euro, frDate, daysOverdue, DashboardData } from '../core/models';
 
 @Component({
@@ -91,6 +92,7 @@ import { euro, frDate, daysOverdue, DashboardData } from '../core/models';
 })
 export class DashboardComponent {
   private api = inject(ApiService);
+  private auth = inject(AuthService);
   data = signal<DashboardData | null>(null);
   ownerName = signal('');
 
@@ -99,8 +101,9 @@ export class DashboardComponent {
   daysOverdue = daysOverdue;
 
   constructor() {
+    this.ownerName.set(this.auth.user()?.name || '');
     this.api.dashboard().subscribe((d) => this.data.set(d));
-    this.api.profile().subscribe((p) => this.ownerName.set(p?.['ownerName'] || ''));
+    this.api.profile().subscribe((p) => this.ownerName.set(p?.['ownerName'] || this.auth.user()?.name || ''));
   }
 
   private kpis() { return this.data()?.kpis || {}; }

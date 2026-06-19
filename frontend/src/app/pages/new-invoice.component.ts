@@ -36,8 +36,8 @@ interface Line { id: number; description: string; qty: number; unit_price: numbe
               <v-icon name="chevronDown" [size]="16" class="chev" />
             </div>
           </div>
-          <div><label class="v-label">Date d'émission</label><input class="v-input" [(ngModel)]="issued" /></div>
-          <div><label class="v-label">Échéance</label><input class="v-input" [(ngModel)]="due" /></div>
+          <div><label class="v-label">Date d'émission</label><input class="v-input" type="date" [(ngModel)]="issued" /></div>
+          <div><label class="v-label">Échéance</label><input class="v-input" type="date" [(ngModel)]="due" /></div>
         </div>
       </v-card>
 
@@ -92,14 +92,14 @@ export class NewInvoiceComponent {
   euro = euro;
 
   clients = signal<Client[]>([]);
-  nextId = signal('F-2026-083');
+  nextId = signal('');
   clientName = '';
-  issued = '18 juin 2026';
-  due = '18 juil. 2026';
-  notes = 'Paiement par virement — IBAN FR76 3000 4000 0500 0012 3456 789';
+  issued = isoToday(0);
+  due = isoToday(30);
+  notes = '';
 
   private seq = 2;
-  lines = signal<Line[]>([{ id: 1, description: 'Prestation de conseil', qty: 1, unit_price: 650 }]);
+  lines = signal<Line[]>([{ id: 1, description: '', qty: 1, unit_price: 0 }]);
 
   ht = computed(() => this.lines().reduce((a, l) => a + (+l.qty || 0) * (+l.unit_price || 0), 0));
   tva = computed(() => this.ht() * 0.2);
@@ -125,10 +125,19 @@ export class NewInvoiceComponent {
     this.api.createInvoice({
       client_id: client?.id || null,
       client_name: this.clientName,
+      issued_on: this.issued || null,
+      due_on: this.due || null,
       statut,
       tva_rate: 20,
       notes: this.notes,
       lines: this.lines().map((l) => ({ description: l.description, qty: +l.qty || 0, unit_price: +l.unit_price || 0 })),
     }).subscribe(() => this.router.navigateByUrl('/factures'));
   }
+}
+
+/** Date ISO (YYYY-MM-DD) décalée de `offsetDays` à partir d'aujourd'hui */
+function isoToday(offsetDays: number): string {
+  const d = new Date();
+  d.setDate(d.getDate() + offsetDays);
+  return d.toISOString().slice(0, 10);
 }

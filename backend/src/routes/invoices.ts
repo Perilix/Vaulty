@@ -1,30 +1,20 @@
 import { Router } from 'express';
 import { pool, query } from '../db.js';
+import { uid } from '../auth.js';
 
 export const invoicesRouter = Router();
 
-// Totaux d'une facture calculés depuis ses lignes
-async function totalsFor(invoiceId: string, tvaRate = 20) {
-  const lines = await query<{ qty: string; unit_price: string }>(
-    `SELECT qty, unit_price FROM invoice_lines WHERE invoice_id = $1`,
-    [invoiceId],
-  );
-  const ht = lines.reduce((a, l) => a + Number(l.qty) * Number(l.unit_price), 0);
-  const tva = (ht * tvaRate) / 100;
-  return { ht, tva, ttc: ht + tva };
-}
-
 invoicesRouter.get('/', async (req, res) => {
   const { status, q } = req.query as { status?: string; q?: string };
-  const params: any[] = [];
-  let where = '';
+  const params: any[] = [uid(req)];
+  let where = ' WHERE i.user_id = $1';
   if (status && status !== 'all') {
     params.push(status);
-    where += ` WHERE i.statut = $${params.length}`;
+    where += ` AND i.statut = $${params.length}`;
   }
   if (q) {
     params.push(`%${q.toLowerCase()}%`);
-    where += `${where ? ' AND' : ' WHERE'} (LOWER(i.client_name) LIKE $${params.length} OR LOWER(i.id) LIKE $${params.length})`;
+    where += ` AND (LOWER(i.client_name) LIKE $${params.length} OR LOWER(i.id) LIKE $${params.length})`;
   }
   const rows = await query(
     `SELECT i.id, i.client_id, i.client_name, i.issued_on, i.due_on, i.statut, i.tva_rate,
@@ -45,11 +35,27 @@ invoicesRouter.get('/', async (req, res) => {
   );
 });
 
+// Prochain numéro de facture (F-YYYY-NNN), par utilisateur
+async function nextInvoiceId(userId: string): Promise<string> {
+  const year = 2026;
+  const [row] = await query<{ max: string | null }>(
+    `SELECT MAX(SUBSTRING(id FROM 9)::int)::text AS max
+       FROM invoices WHERE user_id = $1 AND id LIKE $2`,
+    [userId, `F-${year}-%`],
+  );
+  const next = (row?.max ? parseInt(row.max, 10) : 0) + 1;
+  return `F-${year}-${String(next).padStart(3, '0')}`;
+}
+
+invoicesRouter.get('/meta/next-number', async (req, res) => {
+  res.json({ id: await nextInvoiceId(uid(req)) });
+});
+
 invoicesRouter.get('/:id', async (req, res) => {
   const [invoice] = await query(
     `SELECT id, client_id, client_name, issued_on, due_on, statut, tva_rate, notes
-       FROM invoices WHERE id = $1`,
-    [req.params.id],
+       FROM invoices WHERE id = $1 AND user_id = $2`,
+    [req.params.id, uid(req)],
   );
   if (!invoice) return res.status(404).json({ error: 'Facture introuvable.' });
   const lines = await query(
@@ -57,37 +63,24 @@ invoicesRouter.get('/:id', async (req, res) => {
       WHERE invoice_id = $1 ORDER BY position`,
     [req.params.id],
   );
-  const totals = await totalsFor(invoice.id, Number(invoice.tva_rate));
-  res.json({ ...invoice, lines, ...totals });
-});
-
-// Génère le prochain numéro de facture (F-YYYY-NNN)
-async function nextInvoiceId(): Promise<string> {
-  const year = 2026;
-  const [row] = await query<{ max: string | null }>(
-    `SELECT MAX(SUBSTRING(id FROM 9)::int)::text AS max FROM invoices WHERE id LIKE $1`,
-    [`F-${year}-%`],
-  );
-  const next = (row?.max ? parseInt(row.max, 10) : 0) + 1;
-  return `F-${year}-${String(next).padStart(3, '0')}`;
-}
-
-invoicesRouter.get('/meta/next-number', async (_req, res) => {
-  res.json({ id: await nextInvoiceId() });
+  const ht = lines.reduce((a: number, l: any) => a + Number(l.qty) * Number(l.unit_price), 0);
+  const tva = (ht * Number(invoice.tva_rate)) / 100;
+  res.json({ ...invoice, lines, ht, tva, ttc: ht + tva });
 });
 
 invoicesRouter.post('/', async (req, res) => {
   const b = req.body ?? {};
+  const userId = uid(req);
   const lines: any[] = Array.isArray(b.lines) ? b.lines : [];
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
-    const id = b.id || (await nextInvoiceId());
+    const id = b.id || (await nextInvoiceId(userId));
     await client.query(
-      `INSERT INTO invoices (id, client_id, client_name, issued_on, due_on, statut, tva_rate, notes)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
+      `INSERT INTO invoices (id, user_id, client_id, client_name, issued_on, due_on, statut, tva_rate, notes)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
       [
-        id, b.client_id || null, b.client_name || '', b.issued_on || null,
+        id, userId, b.client_id || null, b.client_name || '', b.issued_on || null,
         b.due_on || null, b.statut || 'draft', b.tva_rate ?? 20, b.notes || null,
       ],
     );
@@ -113,8 +106,8 @@ invoicesRouter.patch('/:id', async (req, res) => {
   const { statut } = req.body ?? {};
   if (!statut) return res.status(400).json({ error: 'Champ "statut" requis.' });
   const rows = await query(
-    `UPDATE invoices SET statut = $1 WHERE id = $2 RETURNING id, statut`,
-    [statut, req.params.id],
+    `UPDATE invoices SET statut = $1 WHERE id = $2 AND user_id = $3 RETURNING id, statut`,
+    [statut, req.params.id, uid(req)],
   );
   if (!rows.length) return res.status(404).json({ error: 'Facture introuvable.' });
   res.json(rows[0]);

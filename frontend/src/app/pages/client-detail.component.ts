@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CardComponent, BtnComponent, AvatarComponent, BadgeComponent, SectionTitleComponent, StatusBadgeComponent } from '../shared/ui';
 import { IconComponent } from '../shared/icon.component';
@@ -68,21 +68,10 @@ import { euro, frDate, toneVar, Client, STATUT_TONE } from '../core/models';
               <v-section-title>Coordonnées</v-section-title>
               <div class="info">
                 <div class="ir"><v-icon name="mail" [size]="16" /><span class="ir-l">Email</span><span class="ir-v">{{ c.email }}</span></div>
-                <div class="ir"><v-icon name="phone" [size]="16" /><span class="ir-l">Téléphone</span><span class="ir-v">{{ c.phone || '01 42 88 19 03' }}</span></div>
+                <div class="ir"><v-icon name="phone" [size]="16" /><span class="ir-l">Téléphone</span><span class="ir-v">{{ c.phone || '—' }}</span></div>
                 <div class="ir"><v-icon name="pin" [size]="16" /><span class="ir-l">Ville</span><span class="ir-v">{{ c.city }}</span></div>
                 <div class="ir"><v-icon name="fileText" [size]="16" /><span class="ir-l">SIRET</span><span class="ir-v">{{ c.siret }}</span></div>
                 <div class="ir"><v-icon name="creditCard" [size]="16" /><span class="ir-l">Conditions</span><span class="ir-v">{{ c.conditions || 'Net 30 jours' }}</span></div>
-              </div>
-            </v-card>
-            <v-card>
-              <v-section-title>Activité récente</v-section-title>
-              <div class="activity">
-                @for (a of activity(); track $index; let idx = $index) {
-                  <div class="act" [class.bordered]="idx > 0">
-                    <div class="act-ic" [style.background]="toneVar(a.tone).bg" [style.color]="toneVar(a.tone).fg"><v-icon [name]="a.icon" [size]="16" /></div>
-                    <div class="act-body"><div class="act-txt">{{ a.txt }}</div><div class="act-date">{{ a.date }}</div></div>
-                  </div>
-                }
               </div>
             </v-card>
           </div>
@@ -106,14 +95,4 @@ export class ClientDetailComponent {
 
   tone(c: Client) { return STATUT_TONE[c.statut] || 'muted'; }
   newInvoice(c: Client) { this.router.navigate(['/factures/nouvelle'], { queryParams: { client: c.id } }); }
-
-  activity = computed(() => {
-    const inv = this.client()?.invoices?.[0];
-    return [
-      { icon: 'check', tone: 'pos' as const, txt: `Paiement reçu — ${inv ? inv.id : 'F-2026-076'}`, date: 'Il y a 3 jours' },
-      { icon: 'send', tone: 'primary' as const, txt: 'Facture envoyée par email', date: 'Il y a 8 jours' },
-      { icon: 'mail', tone: 'warn' as const, txt: 'Relance automatique envoyée', date: 'Il y a 12 jours' },
-      { icon: 'edit', tone: 'muted' as const, txt: 'Fiche client mise à jour', date: 'Il y a 1 mois' },
-    ];
-  });
 }

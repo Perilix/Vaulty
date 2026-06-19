@@ -1,13 +1,15 @@
 import { Router } from 'express';
 import { query } from '../db.js';
+import { uid } from '../auth.js';
 
 export const clientsRouter = Router();
 
-clientsRouter.get('/', async (_req, res) => {
+clientsRouter.get('/', async (req, res) => {
   const rows = await query(
     `SELECT id, name, type, contact, email, phone, address, city, siret, conditions,
             statut, ca, encours, factures, delai
-       FROM clients ORDER BY name`,
+       FROM clients WHERE user_id = $1 ORDER BY name`,
+    [uid(req)],
   );
   res.json(rows);
 });
@@ -16,14 +18,14 @@ clientsRouter.get('/:id', async (req, res) => {
   const [client] = await query(
     `SELECT id, name, type, contact, email, phone, address, city, siret, conditions,
             statut, ca, encours, factures, delai
-       FROM clients WHERE id = $1`,
-    [req.params.id],
+       FROM clients WHERE id = $1 AND user_id = $2`,
+    [req.params.id, uid(req)],
   );
   if (!client) return res.status(404).json({ error: 'Client introuvable.' });
   const invoices = await query(
     `SELECT id, client_name, issued_on, due_on, statut FROM invoices
-      WHERE client_id = $1 ORDER BY issued_on DESC NULLS LAST, id DESC`,
-    [req.params.id],
+      WHERE client_id = $1 AND user_id = $2 ORDER BY issued_on DESC NULLS LAST, id DESC`,
+    [req.params.id, uid(req)],
   );
   res.json({ ...client, invoices });
 });
@@ -35,10 +37,10 @@ clientsRouter.post('/', async (req, res) => {
   }
   const id = 'c' + Date.now();
   const [row] = await query(
-    `INSERT INTO clients (id, name, type, contact, email, phone, address, city, siret, conditions, statut)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'Bon payeur') RETURNING *`,
+    `INSERT INTO clients (id, user_id, name, type, contact, email, phone, address, city, siret, conditions, statut)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,'Bon payeur') RETURNING *`,
     [
-      id, b.name, b.type || 'entreprise', b.contact || null, b.email,
+      id, uid(req), b.name, b.type || 'entreprise', b.contact || null, b.email,
       b.phone || null, b.address || null, b.city || null, b.siret || null,
       b.conditions || 'Net 30 jours',
     ],

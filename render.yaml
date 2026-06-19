@@ -20,14 +20,10 @@ services:
         fromDatabase:
           name: vaulty-db
           property: connectionString
-      - key: APP_PASSWORD
-        sync: false           # à définir dans le dashboard (mot de passe de connexion)
       - key: JWT_SECRET
         generateValue: true
       - key: AUTO_MIGRATE
         value: "true"
-      - key: AUTO_SEED
-        value: "true"         # seed des données de démo au 1er déploiement (si base vide)
 
   # --- Frontend : nginx (sert Angular + proxy /api -> vaulty-api) ---
   - type: web
