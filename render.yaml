@@ -33,9 +33,7 @@ services:
     dockerContext: ./frontend
     plan: free
     envVars:
-      # Adresse interne (host:port) du backend, injectée par Render
-      - key: BACKEND_HOSTPORT
-        fromService:
-          name: vaulty-api
-          type: web
-          property: hostport
+      # URL publique complète du backend (avec https://), ex :
+      # https://vaulty-backend-xxxx.onrender.com  — à définir dans le dashboard.
+      - key: BACKEND_ORIGIN
+        sync: false

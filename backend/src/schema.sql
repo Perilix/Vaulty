@@ -1,4 +1,6 @@
 -- Vaulty — schéma de base de données (multi-utilisateurs)
+-- Idempotent et auto-réparant : peut s'appliquer sur une base vierge OU sur une
+-- ancienne base (tables sans user_id) sans intervention manuelle.
 
 CREATE TABLE IF NOT EXISTS users (
   id            TEXT PRIMARY KEY,
@@ -12,7 +14,7 @@ CREATE TABLE IF NOT EXISTS clients (
   id          TEXT PRIMARY KEY,
   user_id     TEXT REFERENCES users(id) ON DELETE CASCADE,
   name        TEXT NOT NULL,
-  type        TEXT NOT NULL DEFAULT 'entreprise',   -- entreprise | particulier
+  type        TEXT NOT NULL DEFAULT 'entreprise',
   contact     TEXT,
   email       TEXT,
   phone       TEXT,
@@ -20,7 +22,7 @@ CREATE TABLE IF NOT EXISTS clients (
   city        TEXT,
   siret       TEXT,
   conditions  TEXT DEFAULT 'Net 30 jours',
-  statut      TEXT NOT NULL DEFAULT 'Bon payeur',   -- Bon payeur | À surveiller | En retard
+  statut      TEXT NOT NULL DEFAULT 'Bon payeur',
   ca          NUMERIC(14,2) NOT NULL DEFAULT 0,
   encours     NUMERIC(14,2) NOT NULL DEFAULT 0,
   factures    INTEGER NOT NULL DEFAULT 0,
@@ -29,13 +31,13 @@ CREATE TABLE IF NOT EXISTS clients (
 );
 
 CREATE TABLE IF NOT EXISTS invoices (
-  id          TEXT PRIMARY KEY,                     -- ex: F-2026-082
+  id          TEXT PRIMARY KEY,
   user_id     TEXT REFERENCES users(id) ON DELETE CASCADE,
   client_id   TEXT REFERENCES clients(id) ON DELETE SET NULL,
   client_name TEXT NOT NULL,
   issued_on   DATE,
   due_on      DATE,
-  statut      TEXT NOT NULL DEFAULT 'draft',        -- paid | pending | overdue | draft
+  statut      TEXT NOT NULL DEFAULT 'draft',
   notes       TEXT,
   tva_rate    NUMERIC(5,2) NOT NULL DEFAULT 20,
   created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
@@ -50,7 +52,23 @@ CREATE TABLE IF NOT EXISTS invoice_lines (
   position    INTEGER NOT NULL DEFAULT 0
 );
 
--- Réglages par utilisateur (profil entreprise…) en JSON
+-- Migration des bases antérieures (tables créées sans user_id) :
+ALTER TABLE clients  ADD COLUMN IF NOT EXISTS user_id TEXT REFERENCES users(id) ON DELETE CASCADE;
+ALTER TABLE invoices ADD COLUMN IF NOT EXISTS user_id TEXT REFERENCES users(id) ON DELETE CASCADE;
+
+-- app_settings est passé d'une PK (key) à (user_id, key).
+-- On ne supprime l'ANCIENNE table (sans user_id) qu'une seule fois ; si elle a déjà
+-- la bonne structure, on n'y touche pas (les profils enregistrés sont préservés).
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'app_settings')
+     AND NOT EXISTS (
+       SELECT 1 FROM information_schema.columns
+       WHERE table_name = 'app_settings' AND column_name = 'user_id'
+     ) THEN
+    DROP TABLE app_settings;
+  END IF;
+END $$;
 CREATE TABLE IF NOT EXISTS app_settings (
   user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   key     TEXT NOT NULL,

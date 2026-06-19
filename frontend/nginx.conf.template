@@ -8,16 +8,17 @@ server {
     gzip on;
     gzip_types text/css application/javascript application/json image/svg+xml;
 
-    # Proxy de l'API vers le backend (pas de CORS car même origine côté navigateur).
+    # Proxy de l'API vers le backend.
+    # BACKEND_ORIGIN = origine complète AVEC le schéma, ex :
+    #   - local   : http://api:3000
+    #   - Render  : https://vaulty-backend-xxxx.onrender.com
     # On passe par une variable + resolver pour que nginx NE PLANTE PAS au démarrage
-    # si le backend n'est pas encore joignable, et résolve son adresse à chaud.
-    # NGINX_LOCAL_RESOLVERS est fourni par l'image nginx (DNS du conteneur : Docker en local, Render en prod).
+    # et résolve l'hôte à chaud. (RESOLVER = DNS du conteneur, fourni par resolver.envsh)
     location /api/ {
         resolver ${RESOLVER} valid=10s;
-        set $backend "${BACKEND_HOSTPORT}";
-        proxy_pass http://$backend;
-        proxy_http_version 1.1;
-        proxy_set_header Host $host;
+        set $origin "${BACKEND_ORIGIN}";
+        proxy_pass $origin$request_uri;
+        proxy_ssl_server_name on;                 # SNI correct pour un backend en HTTPS
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;

@@ -15,7 +15,7 @@ COPY nginx.conf.template /etc/nginx/templates/default.conf.template
 # Doit être exécutable, sinon l'entrypoint nginx l'ignore.
 COPY --chmod=0755 resolver.envsh /docker-entrypoint.d/19-resolver.envsh
 COPY --from=build /app/dist/frontend/browser /usr/share/nginx/html
-# Valeurs par défaut (surchargées en prod : Render injecte PORT, BACKEND_HOSTPORT via render.yaml)
+# Valeurs par défaut (surchargées en prod : Render injecte PORT, et tu définis BACKEND_ORIGIN)
 ENV PORT=8080
-ENV BACKEND_HOSTPORT=backend:3000
+ENV BACKEND_ORIGIN=http://api:3000
 EXPOSE 8080
