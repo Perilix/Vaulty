@@ -74,9 +74,9 @@ import { euro, frDate, daysOverdue, Invoice, InvoiceStatus } from '../core/model
           <div class="side">
             <v-card>
               <div class="acts">
-                <v-btn class="block" variant="primary" icon="send">Envoyer un rappel</v-btn>
-                <v-btn class="block" variant="secondary" icon="check" (click)="markPaid()">Marquer comme payée</v-btn>
-                <v-btn class="block" variant="ghost" icon="download">Télécharger le PDF</v-btn>
+                <v-btn class="block" variant="primary" icon="check" (click)="markPaid()">Marquer comme payée</v-btn>
+                <v-btn class="block" variant="secondary" icon="edit" (click)="edit()">Modifier</v-btn>
+                <v-btn class="block" variant="ghost" icon="trash" (click)="remove()">Supprimer</v-btn>
               </div>
             </v-card>
             <v-card>
@@ -141,5 +141,17 @@ export class InvoiceDetailComponent {
     const inv = this.iv();
     if (!inv) return;
     this.api.setInvoiceStatus(inv.id, 'paid' as InvoiceStatus).subscribe(() => this.iv.set({ ...inv, statut: 'paid' }));
+  }
+
+  edit() {
+    const inv = this.iv();
+    if (inv) this.router.navigateByUrl(`/factures/${inv.id}/modifier`);
+  }
+
+  remove() {
+    const inv = this.iv();
+    if (!inv) return;
+    if (!confirm(`Supprimer la facture ${inv.id} ? Cette action est irréversible.`)) return;
+    this.api.deleteInvoice(inv.id).subscribe(() => this.router.navigateByUrl('/factures'));
   }
 }

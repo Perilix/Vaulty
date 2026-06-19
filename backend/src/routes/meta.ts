@@ -42,6 +42,9 @@ metaRouter.get('/dashboard', async (req, res) => {
     .reduce((a, r) => a + ttcOf(r), 0);
   const enAttente = unpaid.reduce((a, r) => a + ttcOf(r), 0);
   const tvaCollectee = paid.reduce((a, r) => a + tvaOf(r), 0);
+  // CA déclaré (HT encaissé) et cotisations URSSAF (12,8 %)
+  const caDeclare = paid.reduce((a, r) => a + Number(r.ht), 0);
+  const urssaf = caDeclare * 0.128;
 
   // Courbe : encaissé (TTC payé) sur les 12 derniers mois
   const buckets: { key: string; label: string; total: number }[] = [];
@@ -75,6 +78,8 @@ metaRouter.get('/dashboard', async (req, res) => {
       impayesNb: unpaid.length,
       retardNb: overdue.length,
       tvaCollectee,
+      caDeclare,
+      urssaf,
       months: buckets.map((b) => b.label),
       caEncaisse: buckets.map((b) => Math.round(b.total)),
     },

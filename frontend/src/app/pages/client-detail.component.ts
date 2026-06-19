@@ -28,7 +28,8 @@ import { euro, frDate, toneVar, Client, STATUT_TONE } from '../core/models';
               </div>
             </div>
             <div class="hdr-actions">
-              <v-btn variant="secondary" icon="mail">Relancer</v-btn>
+              <v-btn variant="secondary" icon="edit" (click)="edit(c)">Modifier</v-btn>
+              <v-btn variant="ghost" icon="trash" (click)="remove(c)">Supprimer</v-btn>
               <v-btn variant="primary" icon="plus" (click)="newInvoice(c)">Nouvelle facture</v-btn>
             </div>
           </div>
@@ -40,7 +41,7 @@ import { euro, frDate, toneVar, Client, STATUT_TONE } from '../core/models';
               <div class="stat"><div class="s-l">CA total</div><div class="s-v mono-num">{{ euro(c.ca) }}</div></div>
               <div class="stat"><div class="s-l">Encours</div><div class="s-v mono-num" [style.color]="c.encours > 0 ? toneVar('warn').fg : ''">{{ euro(c.encours) }}</div></div>
               <div class="stat"><div class="s-l">Factures</div><div class="s-v mono-num">{{ c.factures }}</div></div>
-              <div class="stat"><div class="s-l">Délai moyen</div><div class="s-v mono-num">{{ c.delai }} j</div></div>
+              <div class="stat"><div class="s-l">Payées</div><div class="s-v mono-num">{{ c.payees }}</div></div>
             </div>
 
             <v-card [pad]="0">
@@ -51,7 +52,7 @@ import { euro, frDate, toneVar, Client, STATUT_TONE } from '../core/models';
                     <tr [class.bordered]="idx > 0" (click)="router.navigateByUrl('/factures/' + iv.id)">
                       <td class="id sg">{{ iv.id }}</td>
                       <td class="dim">{{ frDate(iv.issued_on) }}</td>
-                      <td class="r mono-num amt">{{ euro((iv.ht || 0) * 1.2) }}</td>
+                      <td class="r mono-num amt">{{ euro(iv.ttc) }}</td>
                       <td class="r"><v-status-badge [status]="iv.statut" /></td>
                     </tr>
                   }
@@ -95,4 +96,9 @@ export class ClientDetailComponent {
 
   tone(c: Client) { return STATUT_TONE[c.statut] || 'muted'; }
   newInvoice(c: Client) { this.router.navigate(['/factures/nouvelle'], { queryParams: { client: c.id } }); }
+  edit(c: Client) { this.router.navigateByUrl(`/clients/${c.id}/modifier`); }
+  remove(c: Client) {
+    if (!confirm(`Supprimer le client « ${c.name} » ? Cette action est irréversible.`)) return;
+    this.api.deleteClient(c.id).subscribe(() => this.router.navigateByUrl('/clients'));
+  }
 }

@@ -19,7 +19,7 @@ import { euro, frDate, daysOverdue, DashboardData } from '../core/models';
       <div class="grid-3" style="margin-bottom:18px">
         <v-kpi-card icon="euro" label="Encaissé" [value]="m('encaisse')" [accent]="true" foot="Total des factures payées" />
         <v-kpi-card icon="clock" label="En attente de paiement" [value]="m('enAttente')" [foot]="attenteFoot()" />
-        <v-kpi-card icon="receipt" label="TVA collectée" [value]="m('tvaCollectee')" foot="Sur les factures payées" />
+        <v-kpi-card icon="receipt" label="URSSAF" [value]="m('urssaf')" foot="12,8 % du CA déclaré" />
       </div>
 
       <div class="grid-main" style="margin-bottom:18px">

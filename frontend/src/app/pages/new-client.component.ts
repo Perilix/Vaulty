@@ -1,6 +1,6 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { CardComponent, BtnComponent, SegmentedComponent, SectionTitleComponent } from '../shared/ui';
 import { IconComponent } from '../shared/icon.component';
 import { ApiService } from '../core/api.service';
@@ -14,8 +14,8 @@ import { ApiService } from '../core/api.service';
       <button class="back" (click)="router.navigateByUrl('/clients')">
         <v-icon name="arrowRight" [size]="16" style="transform:rotate(180deg)" /> Retour aux clients
       </button>
-      <h1 class="page-h1" style="margin-bottom:4px">Nouveau client</h1>
-      <div class="sub" style="margin-bottom:24px">Ajoute un client à ton carnet pour le facturer et suivre ses paiements.</div>
+      <h1 class="page-h1" style="margin-bottom:4px">{{ editId() ? 'Modifier le client' : 'Nouveau client' }}</h1>
+      <div class="sub" style="margin-bottom:24px">{{ editId() ? 'Mets à jour les informations de ce client.' : 'Ajoute un client à ton carnet pour le facturer et suivre ses paiements.' }}</div>
 
       <v-card style="margin-bottom:18px">
         <v-section-title>Type de client</v-section-title>
@@ -50,8 +50,8 @@ import { ApiService } from '../core/api.service';
       </v-card>
 
       <div class="foot">
-        <v-btn variant="ghost" (click)="router.navigateByUrl('/clients')">Annuler</v-btn>
-        <span [class.disabled]="!valid()"><v-btn variant="primary" icon="check" (click)="save()">Enregistrer le client</v-btn></span>
+        <v-btn variant="ghost" (click)="back()">Annuler</v-btn>
+        <span [class.disabled]="!valid()"><v-btn variant="primary" icon="check" (click)="save()">{{ editId() ? 'Enregistrer les modifications' : 'Enregistrer le client' }}</v-btn></span>
       </div>
     </div>
   `,
@@ -70,8 +70,10 @@ import { ApiService } from '../core/api.service';
 })
 export class NewClientComponent {
   private api = inject(ApiService);
+  private route = inject(ActivatedRoute);
   router = inject(Router);
 
+  editId = signal<string | null>(null);
   type = signal('entreprise');
   typeOpts = [
     { value: 'entreprise', label: 'Entreprise', icon: 'building' },
@@ -80,9 +82,28 @@ export class NewClientComponent {
   conditions = ['À réception', 'Net 15 jours', 'Net 30 jours', 'Net 45 jours', 'Net 60 jours'];
   f = { name: '', contact: '', email: '', phone: '', address: '', city: '', siret: '', conditions: 'Net 30 jours' };
 
+  constructor() {
+    const id = this.route.snapshot.paramMap.get('id');
+    if (id) {
+      this.editId.set(id);
+      this.api.client(id).subscribe((c) => {
+        this.type.set(c.type || 'entreprise');
+        this.f = {
+          name: c.name || '', contact: c.contact || '', email: c.email || '', phone: c.phone || '',
+          address: c.address || '', city: c.city || '', siret: c.siret || '',
+          conditions: c.conditions || 'Net 30 jours',
+        };
+      });
+    }
+  }
+
   valid() { return this.f.name.trim() && this.f.email.trim(); }
+  back() { this.router.navigateByUrl(this.editId() ? `/clients/${this.editId()}` : '/clients'); }
   save() {
     if (!this.valid()) return;
-    this.api.createClient({ ...this.f, type: this.type() as any }).subscribe(() => this.router.navigateByUrl('/clients'));
+    const body = { ...this.f, type: this.type() as any };
+    const id = this.editId();
+    const req$ = id ? this.api.updateClient(id, body) : this.api.createClient(body);
+    req$.subscribe(() => this.router.navigateByUrl(id ? `/clients/${id}` : '/clients'));
   }
 }

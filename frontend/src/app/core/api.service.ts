@@ -38,6 +38,12 @@ export class ApiService {
   createClient(body: Partial<Client>): Observable<Client> {
     return this.http.post<Client>(`${BASE}/clients`, body);
   }
+  updateClient(id: string, body: Partial<Client>): Observable<Client> {
+    return this.http.put<Client>(`${BASE}/clients/${id}`, body);
+  }
+  deleteClient(id: string): Observable<any> {
+    return this.http.delete(`${BASE}/clients/${id}`);
+  }
 
   // Invoices
   invoices(status: string = 'all', q = ''): Observable<Invoice[]> {
@@ -54,6 +60,12 @@ export class ApiService {
   }
   createInvoice(body: any): Observable<{ id: string }> {
     return this.http.post<{ id: string }>(`${BASE}/invoices`, body);
+  }
+  updateInvoice(id: string, body: any): Observable<{ id: string }> {
+    return this.http.put<{ id: string }>(`${BASE}/invoices/${id}`, body);
+  }
+  deleteInvoice(id: string): Observable<any> {
+    return this.http.delete(`${BASE}/invoices/${id}`);
   }
   setInvoiceStatus(id: string, statut: InvoiceStatus): Observable<any> {
     return this.http.patch(`${BASE}/invoices/${id}`, { statut });

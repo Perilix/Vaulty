@@ -112,3 +112,53 @@ invoicesRouter.patch('/:id', async (req, res) => {
   if (!rows.length) return res.status(404).json({ error: 'Facture introuvable.' });
   res.json(rows[0]);
 });
+
+// Mise à jour complète d'une facture (champs + lignes)
+invoicesRouter.put('/:id', async (req, res) => {
+  const b = req.body ?? {};
+  const userId = uid(req);
+  const id = req.params.id;
+  const lines: any[] = Array.isArray(b.lines) ? b.lines : [];
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const upd = await client.query(
+      `UPDATE invoices SET client_id=$1, client_name=$2, issued_on=$3, due_on=$4,
+              statut=$5, tva_rate=$6, notes=$7
+         WHERE id=$8 AND user_id=$9 RETURNING id`,
+      [
+        b.client_id || null, b.client_name || '', b.issued_on || null, b.due_on || null,
+        b.statut || 'draft', b.tva_rate ?? 20, b.notes || null, id, userId,
+      ],
+    );
+    if (!upd.rowCount) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ error: 'Facture introuvable.' });
+    }
+    await client.query(`DELETE FROM invoice_lines WHERE invoice_id = $1`, [id]);
+    for (let i = 0; i < lines.length; i++) {
+      const l = lines[i];
+      await client.query(
+        `INSERT INTO invoice_lines (invoice_id, description, qty, unit_price, position)
+         VALUES ($1,$2,$3,$4,$5)`,
+        [id, l.description || '', Number(l.qty) || 0, Number(l.unit_price) || 0, i],
+      );
+    }
+    await client.query('COMMIT');
+    res.json({ id });
+  } catch (e) {
+    await client.query('ROLLBACK');
+    throw e;
+  } finally {
+    client.release();
+  }
+});
+
+invoicesRouter.delete('/:id', async (req, res) => {
+  const rows = await query(
+    `DELETE FROM invoices WHERE id=$1 AND user_id=$2 RETURNING id`,
+    [req.params.id, uid(req)],
+  );
+  if (!rows.length) return res.status(404).json({ error: 'Facture introuvable.' });
+  res.json({ ok: true });
+});

@@ -4,7 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { CardComponent, BtnComponent, BadgeComponent } from '../shared/ui';
 import { IconComponent } from '../shared/icon.component';
 import { ApiService } from '../core/api.service';
-import { euro, Client } from '../core/models';
+import { euro, Client, InvoiceStatus } from '../core/models';
 
 interface Line { id: number; description: string; qty: number; unit_price: number; }
 
@@ -14,15 +14,18 @@ interface Line { id: number; description: string; qty: number; unit_price: numbe
   imports: [FormsModule, CardComponent, BtnComponent, BadgeComponent, IconComponent],
   template: `
     <div class="wrap">
-      <button class="back" (click)="router.navigateByUrl('/factures')">
+      <button class="back" (click)="back()">
         <v-icon name="arrowRight" [size]="16" style="transform:rotate(180deg)" /> Annuler
       </button>
       <div class="head">
         <div>
-          <h1 class="page-h1">Nouvelle facture</h1>
-          <div class="sub">Prochain numéro · <span class="next">{{ nextId() }}</span></div>
+          <h1 class="page-h1">{{ editId() ? 'Modifier la facture' : 'Nouvelle facture' }}</h1>
+          <div class="sub">
+            @if (editId()) { <span class="next">{{ editId() }}</span> }
+            @else { Prochain numéro · <span class="next">{{ nextId() }}</span> }
+          </div>
         </div>
-        <v-badge tone="muted">Brouillon</v-badge>
+        <v-badge tone="muted">{{ editId() ? statutLabel() : 'Brouillon' }}</v-badge>
       </div>
 
       <v-card style="margin-bottom:18px">
@@ -68,18 +71,30 @@ interface Line { id: number; description: string; qty: number; unit_price: numbe
           <textarea class="v-textarea" rows="4" [(ngModel)]="notes" placeholder="Conditions, RIB, mentions légales…"></textarea>
         </v-card>
         <v-card>
+          <label class="tva-toggle">
+            <input type="checkbox" [(ngModel)]="applyTva" />
+            <span>Appliquer la TVA (20 %)</span>
+          </label>
           <div class="totals">
             <div class="tl"><span>Total HT</span><span class="mono-num">{{ euro(ht()) }}</span></div>
-            <div class="tl"><span>TVA 20 %</span><span class="mono-num dim">{{ euro(tva()) }}</span></div>
-            <div class="ttc"><span>Total TTC</span><span class="mono-num">{{ euro(ht() + tva()) }}</span></div>
+            @if (applyTva) {
+              <div class="tl"><span>TVA 20 %</span><span class="mono-num dim">{{ euro(tva()) }}</span></div>
+            } @else {
+              <div class="tl"><span>TVA</span><span class="dim">Non applicable</span></div>
+            }
+            <div class="ttc"><span>Total {{ applyTva ? 'TTC' : 'à payer' }}</span><span class="mono-num">{{ euro(ht() + tva()) }}</span></div>
           </div>
         </v-card>
       </div>
 
       <div class="foot">
-        <v-btn variant="ghost" (click)="router.navigateByUrl('/factures')">Annuler</v-btn>
-        <v-btn variant="secondary" icon="fileText" (click)="save('draft')">Enregistrer en brouillon</v-btn>
-        <v-btn variant="primary" icon="send" (click)="save('pending')">Créer et envoyer</v-btn>
+        <v-btn variant="ghost" (click)="back()">Annuler</v-btn>
+        @if (editId()) {
+          <v-btn variant="primary" icon="check" (click)="save(statut())">Enregistrer les modifications</v-btn>
+        } @else {
+          <v-btn variant="secondary" icon="fileText" (click)="save('draft')">Enregistrer en brouillon</v-btn>
+          <v-btn variant="primary" icon="send" (click)="save('pending')">Créer et envoyer</v-btn>
+        }
       </div>
     </div>
   `,
@@ -91,27 +106,57 @@ export class NewInvoiceComponent {
   router = inject(Router);
   euro = euro;
 
+  editId = signal<string | null>(null);
+  statut = signal<InvoiceStatus>('draft');
   clients = signal<Client[]>([]);
   nextId = signal('');
   clientName = '';
   issued = isoToday(0);
   due = isoToday(30);
   notes = '';
+  applyTva = true;
 
   private seq = 2;
   lines = signal<Line[]>([{ id: 1, description: '', qty: 1, unit_price: 0 }]);
 
   ht = computed(() => this.lines().reduce((a, l) => a + (+l.qty || 0) * (+l.unit_price || 0), 0));
-  tva = computed(() => this.ht() * 0.2);
+  tva = computed(() => (this.applyTva ? this.ht() * 0.2 : 0));
 
   constructor() {
+    const id = this.route.snapshot.paramMap.get('id');
     const presetId = this.route.snapshot.queryParamMap.get('client');
+
     this.api.clients().subscribe((rows) => {
       this.clients.set(rows);
-      const preset = presetId ? rows.find((c) => c.id === presetId) : null;
-      this.clientName = preset?.name || rows[0]?.name || '';
+      if (!id) {
+        const preset = presetId ? rows.find((c) => c.id === presetId) : null;
+        this.clientName = preset?.name || rows[0]?.name || '';
+      }
     });
-    this.api.nextInvoiceNumber().subscribe((r) => this.nextId.set(r.id));
+
+    if (id) {
+      this.editId.set(id);
+      this.api.invoice(id).subscribe((iv) => {
+        this.statut.set(iv.statut);
+        this.clientName = iv.client_name;
+        this.issued = iv.issued_on || isoToday(0);
+        this.due = iv.due_on || isoToday(30);
+        this.notes = iv.notes || '';
+        this.applyTva = Number(iv.tva_rate) > 0;
+        let s = 1;
+        this.lines.set((iv.lines || []).map((l) => ({
+          id: s++, description: l.description, qty: Number(l.qty), unit_price: Number(l.unit_price),
+        })));
+        this.seq = s;
+        if (!this.lines().length) this.lines.set([{ id: 1, description: '', qty: 1, unit_price: 0 }]);
+      });
+    } else {
+      this.api.nextInvoiceNumber().subscribe((r) => this.nextId.set(r.id));
+    }
+  }
+
+  statutLabel() {
+    return { paid: 'Payée', pending: 'En attente', overdue: 'En retard', draft: 'Brouillon' }[this.statut()];
   }
 
   addLine() { this.lines.update((ls) => [...ls, { id: this.seq++, description: '', qty: 1, unit_price: 0 }]); }
@@ -120,18 +165,25 @@ export class NewInvoiceComponent {
     this.lines.update((ls) => ls.map((l) => (l.id === id ? { ...l, [k]: v } : l)));
   }
 
-  save(statut: 'draft' | 'pending') {
+  back() {
+    this.router.navigateByUrl(this.editId() ? `/factures/${this.editId()}` : '/factures');
+  }
+
+  save(statut: InvoiceStatus) {
     const client = this.clients().find((c) => c.name === this.clientName);
-    this.api.createInvoice({
+    const body = {
       client_id: client?.id || null,
       client_name: this.clientName,
       issued_on: this.issued || null,
       due_on: this.due || null,
       statut,
-      tva_rate: 20,
+      tva_rate: this.applyTva ? 20 : 0,
       notes: this.notes,
       lines: this.lines().map((l) => ({ description: l.description, qty: +l.qty || 0, unit_price: +l.unit_price || 0 })),
-    }).subscribe(() => this.router.navigateByUrl('/factures'));
+    };
+    const id = this.editId();
+    const req$ = id ? this.api.updateInvoice(id, body) : this.api.createInvoice(body);
+    req$.subscribe(() => this.router.navigateByUrl(id ? `/factures/${id}` : '/factures'));
   }
 }
 
