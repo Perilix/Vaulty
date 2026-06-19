@@ -1,0 +1,22 @@
+<div class="wrap">
+  <div class="card">
+    <div class="brand">
+      <img src="vaulty_logo.png" class="login-logo" alt="Vaulty" />
+    </div>
+    <h1>Connexion</h1>
+    <p class="sub">Accède à ta comptabilité.</p>
+    <form (ngSubmit)="submit()">
+      <label class="v-label">Email</label>
+      <input class="v-input" type="email" [(ngModel)]="email" name="email"
+        autocomplete="email" placeholder="toi@exemple.fr" (input)="error.set('')" />
+      <label class="v-label" style="margin-top:14px">Mot de passe</label>
+      <input class="v-input" type="password" [(ngModel)]="password" name="password"
+        autocomplete="current-password" placeholder="••••••••" (input)="error.set('')" />
+      @if (error()) { <div class="err">{{ error() }}</div> }
+      <div class="actions">
+        <v-btn variant="primary" icon="logout">{{ loading() ? 'Connexion…' : 'Se connecter' }}</v-btn>
+      </div>
+    </form>
+    <div class="alt">Pas encore de compte ? <a routerLink="/register">Créer un compte</a></div>
+  </div>
+</div>

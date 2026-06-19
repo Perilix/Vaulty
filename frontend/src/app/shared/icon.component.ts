@@ -1,6 +1,6 @@
 import { Component, Input, computed, signal } from '@angular/core';
 
-const ICON_PATHS: Record<string, string> = {
+export const ICON_PATHS: Record<string, string> = {
   dashboard: 'M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z',
   invoice: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zM14 2v6h6 M9 13h6 M9 17h6 M9 9h1',
   clients: 'M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2 M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z M23 21v-2a4 4 0 0 0-3-3.87 M16 3.13a4 4 0 0 1 0 7.75',
@@ -42,13 +42,7 @@ const ICON_PATHS: Record<string, string> = {
 @Component({
   selector: 'v-icon',
   standalone: true,
-  template: `
-    <svg [attr.width]="size" [attr.height]="size" viewBox="0 0 24 24" [attr.fill]="fill"
-      stroke="currentColor" [attr.stroke-width]="stroke" stroke-linecap="round" stroke-linejoin="round"
-      style="flex-shrink:0;display:block">
-      @for (p of segs(); track $index) { <path [attr.d]="p"></path> }
-    </svg>
-  `,
+  templateUrl: './icon.component.html',
 })
 export class IconComponent {
   private _name = signal('');
@@ -64,24 +58,4 @@ export class IconComponent {
   });
 }
 
-@Component({
-  selector: 'v-brand-mark',
-  standalone: true,
-  template: `
-    <svg [attr.width]="size" [attr.height]="size" viewBox="0 0 32 32" fill="none" style="display:block">
-      <path d="M16 2.5 4 7v9c0 7.2 5 11.6 12 13.5 7-1.9 12-6.3 12-13.5V7L16 2.5Z" [attr.fill]="light ? '#5DA5B3' : 'var(--primary)'" />
-      <path d="M16 2.5 4 7v9c0 7.2 5 11.6 12 13.5 7-1.9 12-6.3 12-13.5V7L16 2.5Z" fill="url(#bgrad)" fill-opacity="0.25" />
-      <circle cx="16" cy="14" r="3.2" [attr.fill]="light ? '#1C1C1F' : '#fff'" />
-      <rect x="14.6" y="14" width="2.8" height="6" rx="1.4" [attr.fill]="light ? '#1C1C1F' : '#fff'" />
-      <defs>
-        <linearGradient id="bgrad" x1="4" y1="2.5" x2="28" y2="29.5" gradientUnits="userSpaceOnUse">
-          <stop stop-color="#fff" stop-opacity="0.5" /><stop offset="1" stop-color="#fff" stop-opacity="0" />
-        </linearGradient>
-      </defs>
-    </svg>
-  `,
-})
-export class BrandMarkComponent {
-  @Input() size = 24;
-  @Input() light = false;
-}
+export { BrandMarkComponent } from './brand-mark.component';

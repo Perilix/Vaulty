@@ -1,0 +1,47 @@
+<div class="chart" [style.height.px]="height" (mouseleave)="active.set(null)">
+  <svg [attr.viewBox]="'0 0 ' + W + ' ' + height" width="100%" [attr.height]="height"
+    preserveAspectRatio="none" style="overflow:visible; display:block">
+    <defs>
+      <linearGradient id="areaFill" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="var(--primary)" stop-opacity="0.26" />
+        <stop offset="100%" stop-color="var(--primary)" stop-opacity="0.01" />
+      </linearGradient>
+    </defs>
+    @for (y of gridY(); track $index) {
+      <line [attr.x1]="padL" [attr.y1]="y" [attr.x2]="W - padR" [attr.y2]="y"
+        stroke="var(--border-soft)" stroke-width="1" stroke-dasharray="2 5" />
+    }
+    <path [attr.d]="area()" fill="url(#areaFill)" />
+    <path [attr.d]="line()" fill="none" stroke="var(--primary)" stroke-width="2.6" />
+
+    <!-- guide verticale du point actif -->
+    @if (active() !== null) {
+      <line [attr.x1]="px(active()!)" [attr.y1]="padT" [attr.x2]="px(active()!)" [attr.y2]="height - padB"
+        stroke="var(--primary)" stroke-width="1" stroke-dasharray="3 3" opacity="0.6" />
+    }
+
+    <!-- labels mois -->
+    @for (l of labels; track $index) {
+      <text [attr.x]="px($index)" [attr.y]="height - 6" text-anchor="middle"
+        font-size="11" font-family="Hanken Grotesk" fill="var(--text-3)">{{ l }}</text>
+    }
+
+    <!-- bandes de survol/clic -->
+    @for (l of labels; track $index) {
+      <rect [attr.x]="bandX($index)" y="0" [attr.width]="bandW($index)" [attr.height]="height"
+        fill="transparent" style="cursor:pointer"
+        (mouseenter)="active.set($index)" (click)="active.set($index)" />
+    }
+  </svg>
+
+  <!-- point actif (HTML, pour rester rond malgré l'étirement du SVG) -->
+  @if (active() !== null) {
+    <div class="dot" [style.left.%]="leftPct(active()!)" [style.top.px]="topPx(active()!)"></div>
+    <div class="tip" [style.left.%]="leftPct(active()!)" [style.top.px]="topPx(active()!)"
+      [class.flip]="leftPct(active()!) > 70">
+      <div class="tip-m">{{ labels[active()!] }}</div>
+      <div class="tip-r"><span>CA</span><span class="mono-num">{{ fmt(caData[active()!]) }}</span></div>
+      <div class="tip-r"><span>Marge</span><span class="mono-num strong">{{ fmt(data[active()!]) }}</span></div>
+    </div>
+  }
+</div>

@@ -1,0 +1,22 @@
+.seg {
+  display: inline-flex;
+  gap: 3px;
+  background: var(--surface-inset);
+  padding: 3px;
+  border-radius: 12px;
+  border: 1px solid var(--border-soft);
+}
+button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 15px;
+  border-radius: 9px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-3);
+  background: transparent;
+  transition: all .15s;
+}
+button.small { padding: 6px 12px; }
+button.active { color: var(--text); background: var(--surface); box-shadow: var(--shadow-sm); }

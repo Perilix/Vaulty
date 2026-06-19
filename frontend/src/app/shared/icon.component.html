@@ -1,0 +1,5 @@
+<svg [attr.width]="size" [attr.height]="size" viewBox="0 0 24 24" [attr.fill]="fill"
+  stroke="currentColor" [attr.stroke-width]="stroke" stroke-linecap="round" stroke-linejoin="round"
+  style="flex-shrink:0;display:block">
+  @for (p of segs(); track $index) { <path [attr.d]="p"></path> }
+</svg>

@@ -1,0 +1,8 @@
+<div class="seg">
+  @for (o of options; track o.value) {
+    <button [class.active]="o.value === value" [class.small]="small" (click)="valueChange.emit(o.value)">
+      @if (o.icon) { <v-icon [name]="o.icon" [size]="15" /> }
+      {{ o.label }}
+    </button>
+  }
+</div>

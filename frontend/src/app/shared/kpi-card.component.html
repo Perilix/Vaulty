@@ -1,0 +1,13 @@
+<v-card [pad]="20" [hoverable]="true" [accent]="accent">
+  <div class="acc" [class.accent]="accent">
+    <div class="top">
+      <div class="lead">
+        <div class="ic"><v-icon [name]="icon" [size]="18" /></div>
+        <span class="label">{{ label }}</span>
+      </div>
+      @if (trend != null) { <v-trend-chip [value]="trend" [invert]="trendInvert" /> }
+    </div>
+    <div class="val mono-num">{{ value }}</div>
+    @if (foot) { <div class="foot">{{ foot }}</div> }
+  </div>
+</v-card>

@@ -1,0 +1,10 @@
+.wrap { max-width: 720px; margin: 0 auto; }
+.back { display: inline-flex; align-items: center; gap: 7px; font-size: 13.5px; font-weight: 600; color: var(--text-2); margin-bottom: 18px; }
+.back:hover { color: var(--text); }
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.full { grid-column: 1 / -1; }
+.sel-wrap { position: relative; }
+.chev { position: absolute; right: 13px; top: 13px; color: var(--text-3); pointer-events: none; }
+.v-select { appearance: none; cursor: pointer; }
+.foot { display: flex; justify-content: flex-end; gap: 10px; }
+.disabled { opacity: 0.5; pointer-events: none; }

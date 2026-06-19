@@ -1,0 +1,4 @@
+<span class="chip" [style.color]="good() ? 'var(--pos)' : 'var(--danger)'">
+  <v-icon [name]="value >= 0 ? 'trending' : 'trendingDown'" [size]="14" [stroke]="2.2" />
+  {{ value >= 0 ? '+' : '' }}{{ value }}{{ suffix }}
+</span>

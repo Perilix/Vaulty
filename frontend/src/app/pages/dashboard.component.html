@@ -1,0 +1,56 @@
+<div>
+  <div class="head">
+    <div class="month">{{ monthLabel() }}</div>
+    <h1 class="page-h1">Bonjour{{ greeting() }}</h1>
+  </div>
+
+  <div class="grid-3" style="margin-bottom:18px">
+    <v-kpi-card icon="euro" label="Encaissé" [value]="m('encaisse')" [accent]="true" foot="Total des factures payées" />
+    <v-kpi-card icon="clock" label="En attente de paiement" [value]="m('enAttente')" [foot]="attenteFoot()" />
+    <v-kpi-card icon="receipt" label="URSSAF" [value]="m('urssaf')" foot="12,8 % du CA déclaré" />
+  </div>
+
+  <div class="grid-main" style="margin-bottom:18px">
+    <v-card>
+      <div class="rev-head">
+        <div>
+          <h3>Marge nette <span class="muted">(après URSSAF)</span></h3>
+          <div class="rev-amount">
+            <span class="mono-num big">{{ m('margeTotal') }}</span>
+            <span class="vs">12 derniers mois</span>
+          </div>
+        </div>
+        <span class="legend"><span class="legend-line"></span>Marge</span>
+      </div>
+      @if (hasSeries()) {
+        <v-area-chart [data]="marge()" [caData]="caEncaisse()" [labels]="months()" [height]="230" />
+      } @else {
+        <div class="chart-empty">Aucun encaissement à afficher pour l'instant.</div>
+      }
+    </v-card>
+
+    <v-card>
+      <v-section-title>Encaissements à venir
+        <v-btn action variant="ghost" size="sm" iconRight="arrowRight">Tout voir</v-btn>
+      </v-section-title>
+      <div class="up-list">
+        @for (iv of data()?.upcoming || []; track iv.id; let idx = $index) {
+          <div class="up-row" [class.bordered]="idx > 0">
+            <v-avatar [name]="iv.client_name" [size]="36" />
+            <div class="up-main">
+              <div class="up-name">{{ iv.client_name }}</div>
+              <div class="up-due">échéance {{ frDate(iv.due_on) }}</div>
+            </div>
+            <div class="up-amt">
+              <div class="mono-num">{{ euro(ttc(iv.ht)) }}</div>
+              @if (iv.statut === 'overdue') { <div class="late">En retard · {{ daysOverdue(iv.due_on) }} j</div> }
+            </div>
+          </div>
+        }
+        @if (!(data()?.upcoming || []).length) {
+          <div class="empty">Aucune facture en attente d'encaissement.</div>
+        }
+      </div>
+    </v-card>
+  </div>
+</div>

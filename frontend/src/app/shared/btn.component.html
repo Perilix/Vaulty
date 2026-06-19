@@ -1,0 +1,5 @@
+<button class="btn" [class]="variant + ' s-' + size">
+  @if (icon) { <v-icon [name]="icon" [size]="16" /> }
+  <ng-content />
+  @if (iconRight) { <v-icon [name]="iconRight" [size]="16" /> }
+</button>

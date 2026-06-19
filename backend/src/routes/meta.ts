@@ -46,7 +46,7 @@ metaRouter.get('/dashboard', async (req, res) => {
   const caDeclare = paid.reduce((a, r) => a + Number(r.ht), 0);
   const urssaf = caDeclare * 0.128;
 
-  // Courbe : encaissé (TTC payé) sur les 12 derniers mois
+  // Courbe : CA encaissé HT par mois (12 derniers mois)
   const buckets: { key: string; label: string; total: number }[] = [];
   for (let i = 11; i >= 0; i--) {
     const d = new Date(year, now.getMonth() - i, 1);
@@ -56,8 +56,13 @@ metaRouter.get('/dashboard', async (req, res) => {
     if (!r.issued_on) continue;
     const ym = r.issued_on.slice(0, 7);
     const b = buckets.find((x) => x.key === ym);
-    if (b) b.total += ttcOf(r);
+    if (b) b.total += Number(r.ht); // CA HT déclaré
   }
+  // Marge nette = CA HT - 12,8 % URSSAF
+  const URSSAF_RATE = 0.128;
+  const caSeries = buckets.map((b) => Math.round(b.total));
+  const margeSeries = buckets.map((b) => Math.round(b.total * (1 - URSSAF_RATE)));
+  const margeTotal = margeSeries.reduce((a, v) => a + v, 0);
 
   const upcoming = await query(
     `SELECT i.id, i.client_name, i.due_on, i.statut,
@@ -81,7 +86,9 @@ metaRouter.get('/dashboard', async (req, res) => {
       caDeclare,
       urssaf,
       months: buckets.map((b) => b.label),
-      caEncaisse: buckets.map((b) => Math.round(b.total)),
+      caEncaisse: caSeries,   // CA HT par mois
+      marge: margeSeries,     // marge nette par mois (après URSSAF)
+      margeTotal,
     },
     upcoming: upcoming.map((r: any) => ({ ...r, ht: Number(r.ht) })),
   });

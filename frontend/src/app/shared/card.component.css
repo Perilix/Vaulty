@@ -1,0 +1,16 @@
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow .2s, transform .2s, border-color .2s;
+}
+.hoverable:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+.accent {
+  background: linear-gradient(150deg, #394054 0%, #2A2F3D 60%, #232733 100%);
+  border-color: rgba(93, 165, 179, 0.32);
+  box-shadow: 0 0 0 1px rgba(93, 165, 179, 0.08), 0 14px 36px rgba(0, 0, 0, 0.40);
+}

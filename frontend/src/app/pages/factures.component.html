@@ -1,0 +1,68 @@
+<div>
+  <div class="head">
+    <div>
+      <h1 class="page-h1">Factures</h1>
+      <div class="sub">{{ all().length }} factures · {{ euro(totals().attente + totals().retard) }} en attente d'encaissement</div>
+    </div>
+    <div class="actions">
+      <v-btn variant="secondary" icon="download">Exporter</v-btn>
+      <v-btn variant="primary" icon="plus" (click)="router.navigateByUrl('/factures/nouvelle')">Nouvelle facture</v-btn>
+    </div>
+  </div>
+
+  <div class="grid-3" style="margin-bottom:18px">
+    <div class="tile">
+      <div class="t-ic" [style.background]="tv('pos').bg" [style.color]="tv('pos').fg"><v-icon name="check" [size]="21" /></div>
+      <div class="t-main"><div class="t-l">Encaissé</div><div class="t-v mono-num">{{ euro(totals().encaisse) }}</div></div>
+      <div class="t-sub">{{ counts().paid }} factures</div>
+    </div>
+    <div class="tile">
+      <div class="t-ic" [style.background]="tv('warn').bg" [style.color]="tv('warn').fg"><v-icon name="clock" [size]="21" /></div>
+      <div class="t-main"><div class="t-l">En attente</div><div class="t-v mono-num">{{ euro(totals().attente) }}</div></div>
+      <div class="t-sub">{{ counts().pending }} factures</div>
+    </div>
+    <div class="tile">
+      <div class="t-ic" [style.background]="tv('danger').bg" [style.color]="tv('danger').fg"><v-icon name="alert" [size]="21" /></div>
+      <div class="t-main"><div class="t-l">En retard</div><div class="t-v mono-num">{{ euro(totals().retard) }}</div></div>
+      <div class="t-sub">{{ counts().overdue }} factures</div>
+    </div>
+  </div>
+
+  <div class="filters">
+    <v-segmented [value]="statut()" (valueChange)="statut.set($event)" [options]="segs" />
+    <div class="filters-r">
+      <div class="search">
+        <v-icon name="search" [size]="17" />
+        <input [ngModel]="q()" (ngModelChange)="q.set($event)" placeholder="Rechercher une facture…" />
+      </div>
+      <v-btn variant="secondary" icon="filter">Filtres</v-btn>
+    </div>
+  </div>
+
+  <v-card [pad]="0">
+    <table>
+      <thead>
+        <tr>
+          <th>Facture</th><th>Client</th><th>Date</th><th>Échéance</th>
+          <th class="r">Montant TTC</th><th>Statut</th><th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (iv of filtered(); track iv.id) {
+          <tr (click)="open(iv)">
+            <td class="id sg">{{ iv.id }}</td>
+            <td><div class="cli"><v-avatar [name]="iv.client_name" [size]="28" /><span>{{ iv.client_name }}</span></div></td>
+            <td class="dim">{{ frDate(iv.issued_on) }}</td>
+            <td class="dim">{{ frDate(iv.due_on) }}</td>
+            <td class="r mono-num amt">{{ euro(iv.ttc) }}</td>
+            <td><v-status-badge [status]="iv.statut" [retard]="iv.statut === 'overdue' ? daysOverdue(iv.due_on) : 0" /></td>
+            <td class="r"><v-icon name="chevronRight" [size]="16" /></td>
+          </tr>
+        }
+        @if (!filtered().length) {
+          <tr><td colspan="7" class="empty">Aucune facture.</td></tr>
+        }
+      </tbody>
+    </table>
+  </v-card>
+</div>
