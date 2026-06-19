@@ -1,0 +1,6 @@
+# Sourcé par l'entrypoint nginx (avant la substitution des templates).
+# Récupère le(s) serveur(s) DNS du conteneur pour que nginx puisse résoudre
+# l'upstream à chaud (fonctionne en local Docker comme sur Render).
+RESOLVER="$(awk 'BEGIN { ORS=" " } $1 == "nameserver" { print $2 }' /etc/resolv.conf)"
+if [ -z "$RESOLVER" ]; then RESOLVER="127.0.0.11"; fi
+export RESOLVER
