@@ -1,0 +1,144 @@
+import { Component, computed, inject, signal } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import { CardComponent, BtnComponent, SectionTitleComponent, StatusBadgeComponent } from '../shared/ui';
+import { IconComponent, BrandMarkComponent } from '../shared/icon.component';
+import { ApiService } from '../core/api.service';
+import { euro, frDate, daysOverdue, Invoice, InvoiceStatus } from '../core/models';
+
+@Component({
+  selector: 'app-invoice-detail',
+  standalone: true,
+  imports: [CardComponent, BtnComponent, SectionTitleComponent, StatusBadgeComponent, IconComponent, BrandMarkComponent],
+  template: `
+    <div>
+      <button class="back" (click)="router.navigateByUrl('/factures')">
+        <v-icon name="arrowRight" [size]="16" style="transform:rotate(180deg)" /> Retour aux factures
+      </button>
+
+      @if (iv(); as inv) {
+        <div class="grid">
+          <v-card [pad]="0">
+            <div class="doc-head">
+              <div>
+                <div class="title-row">
+                  <h1>{{ inv.id }}</h1>
+                  <v-status-badge [status]="inv.statut" [retard]="inv.statut === 'overdue' ? daysOverdue(inv.due_on) : 0" />
+                </div>
+                <div class="dates">Émise le {{ frDate(inv.issued_on) }} 2026 · échéance {{ frDate(inv.due_on) }} 2026</div>
+              </div>
+              <div class="logo"><v-brand-mark [size]="22" [light]="true" /></div>
+            </div>
+
+            <div class="parties">
+              <div>
+                <div class="cap">Émetteur</div>
+                <div class="strong">{{ profile()['raisonSociale'] || 'Votre entreprise' }}</div>
+                <div class="lines">
+                  @if (profile()['adresse']) { {{ profile()['adresse'] }}<br/> }
+                  @if (profile()['siret']) { SIRET {{ profile()['siret'] }} }
+                </div>
+              </div>
+              <div>
+                <div class="cap">Client</div>
+                <div class="strong">{{ inv.client_name }}</div>
+                @if (inv.notes) { <div class="lines">{{ inv.notes }}</div> }
+              </div>
+            </div>
+
+            <div class="lines-table">
+              <table>
+                <thead>
+                  <tr><th>Description</th><th class="r">Qté</th><th class="r">Prix unit.</th><th class="r">Total HT</th></tr>
+                </thead>
+                <tbody>
+                  @for (l of inv.lines || []; track $index) {
+                    <tr>
+                      <td>{{ l.description }}</td>
+                      <td class="r mono-num">{{ l.qty }}</td>
+                      <td class="r mono-num">{{ euro(l.unit_price) }}</td>
+                      <td class="r mono-num strong">{{ euro(l.qty * l.unit_price) }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+              <div class="totals">
+                <div class="tot-box">
+                  <div class="tl"><span>Total HT</span><span class="mono-num">{{ euro(inv.ht) }}</span></div>
+                  <div class="tl"><span>TVA 20 %</span><span class="mono-num dim">{{ euro(inv.tva) }}</span></div>
+                  <div class="ttc"><span>Total TTC</span><span class="mono-num">{{ euro(inv.ttc) }}</span></div>
+                </div>
+              </div>
+            </div>
+          </v-card>
+
+          <div class="side">
+            <v-card>
+              <div class="acts">
+                <v-btn class="block" variant="primary" icon="send">Envoyer un rappel</v-btn>
+                <v-btn class="block" variant="secondary" icon="check" (click)="markPaid()">Marquer comme payée</v-btn>
+                <v-btn class="block" variant="ghost" icon="download">Télécharger le PDF</v-btn>
+              </div>
+            </v-card>
+            <v-card>
+              <v-section-title>Suivi du paiement</v-section-title>
+              <div class="timeline">
+                @for (s of steps(); track $index) {
+                  <div class="tl-row">
+                    <div class="tl-col">
+                      <div class="tl-dot" [class.done]="s.done">@if (s.done) { <v-icon name="check" [size]="13" [stroke]="3" /> }</div>
+                      @if (!$last) { <div class="tl-bar" [class.done]="s.done"></div> }
+                    </div>
+                    <div class="tl-body">
+                      <div class="tl-label" [class.done]="s.done">{{ s.label }}</div>
+                      <div class="tl-date">{{ s.date }}</div>
+                    </div>
+                  </div>
+                }
+              </div>
+            </v-card>
+            <v-card>
+              <v-section-title>Détails</v-section-title>
+              <div class="det">
+                <div class="dl"><span>Date d'émission</span><span class="mono-num">{{ frDate(inv.issued_on) }}</span></div>
+                <div class="dl"><span>Échéance</span><span class="mono-num">{{ frDate(inv.due_on) }}</span></div>
+                <div class="dl"><span>Référence</span><span class="mono-num">{{ inv.id }}</span></div>
+              </div>
+            </v-card>
+          </div>
+        </div>
+      }
+    </div>
+  `,
+  styleUrl: './invoice-detail.component.css',
+})
+export class InvoiceDetailComponent {
+  private api = inject(ApiService);
+  private route = inject(ActivatedRoute);
+  router = inject(Router);
+
+  euro = euro; frDate = frDate; daysOverdue = daysOverdue;
+  iv = signal<Invoice | null>(null);
+  profile = signal<Record<string, any>>({});
+
+  constructor() {
+    const id = this.route.snapshot.paramMap.get('id')!;
+    this.api.invoice(id).subscribe((d) => this.iv.set(d));
+    this.api.profile().subscribe((p) => this.profile.set(p || {}));
+  }
+
+  steps = computed(() => {
+    const paid = this.iv()?.statut === 'paid';
+    return [
+      { label: 'Facture créée', done: true, date: frDate(this.iv()?.issued_on) },
+      { label: 'Envoyée au client', done: true, date: frDate(this.iv()?.issued_on) },
+      { label: 'Vue par le client', done: true, date: '04 juin' },
+      { label: 'Paiement reçu', done: paid, date: paid ? '12 juin' : 'En attente' },
+    ];
+  });
+
+  markPaid() {
+    const inv = this.iv();
+    if (!inv) return;
+    this.api.setInvoiceStatus(inv.id, 'paid' as InvoiceStatus).subscribe(() => this.iv.set({ ...inv, statut: 'paid' }));
+  }
+}

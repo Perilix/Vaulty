@@ -1,0 +1,32 @@
+.layout { display: grid; grid-template-columns: 200px 1fr; gap: 26px; align-items: start; }
+.nav { display: flex; flex-direction: column; gap: 3px; }
+.nav button { display: flex; align-items: center; gap: 10px; padding: 10px 13px; border-radius: 10px;
+  font-size: 13.5px; font-weight: 600; text-align: left; background: transparent; color: var(--text-2); }
+.nav button:hover { background: var(--surface-inset); }
+.nav button.active { background: var(--primary-soft); color: var(--primary); }
+
+.content { display: flex; flex-direction: column; gap: 18px; }
+
+.appearance { display: flex; gap: 12px; }
+.mode { flex: 1; display: flex; flex-direction: column; gap: 10px; padding: 18px; border-radius: 14px;
+  border: 2px solid var(--border); background: var(--surface); align-items: flex-start; color: var(--text-3); }
+.mode span { font-size: 14px; font-weight: 600; color: var(--text); }
+.mode.active { border-color: var(--primary); background: var(--primary-soft); }
+.mode .on { color: var(--primary); }
+
+.fields { display: flex; flex-direction: column; gap: 16px; }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.save-row { display: flex; justify-content: flex-end; }
+.save { padding: 9px 16px; border-radius: 11px; background: var(--primary); color: #fff; font-size: 13.5px; font-weight: 600; }
+.save:hover { background: var(--primary-strong); }
+
+.toggles { display: flex; flex-direction: column; gap: 4px; }
+.toggle-row { display: flex; align-items: center; gap: 14px; padding: 13px 0; }
+.toggle-row.bordered { border-top: 1px solid var(--border-soft); }
+.t-info { flex: 1; }
+.t-l { font-size: 13.5px; font-weight: 600; }
+.t-s { font-size: 12.5px; color: var(--text-3); margin-top: 2px; }
+.switch { width: 44px; height: 26px; border-radius: 999px; padding: 3px; flex-shrink: 0; background: var(--border); transition: background .2s; }
+.switch.on { background: var(--primary); }
+.knob { width: 20px; height: 20px; border-radius: 999px; background: #fff; transition: transform .2s; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+.switch.on .knob { transform: translateX(18px); }

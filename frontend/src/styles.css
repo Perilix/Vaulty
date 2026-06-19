@@ -1,0 +1,122 @@
+/* ============ Vaulty — thème global (tokens repris du design) ============ */
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Hanken+Grotesk:wght@400;500;600;700;800&family=Anton&display=swap');
+
+:root {
+  --sage-100: #E0E2E8;
+  --sage-300: #B0C0D4;
+  --sage-500: #5DA5B3;
+  --sage-700: #394054;
+  --sage-900: #1C1C1F;
+
+  /* thème clair */
+  --bg: #E0E2E8;
+  --bg-grad-a: #E7E9EE;
+  --bg-grad-b: #D8DBE3;
+  --surface: #FFFFFF;
+  --surface-2: #F1F3F6;
+  --surface-inset: #E9ECF1;
+  --border: #D2D6DF;
+  --border-soft: #E2E5EB;
+  --text: #1C1C1F;
+  --text-2: #4A5160;
+  --text-3: #858B97;
+  --text-muted: #9096A1;
+  --primary: #5DA5B3;
+  --primary-strong: #468390;
+  --primary-soft: #DCEAEE;
+  --accent: #5DA5B3;
+  --accent-soft: #E2EEF1;
+  --sidebar-bg: #1C1C1F;
+  --sidebar-text: #9499A3;
+  --sidebar-text-active: #FFFFFF;
+  --sidebar-active-bg: rgba(93, 165, 179, 0.22);
+  --pos: #4F9E8C;
+  --pos-soft: #DCEDE8;
+  --warn: #C39A52;
+  --warn-soft: #F2E9D6;
+  --danger: #C56E63;
+  --danger-soft: #F2E0DD;
+  --shadow-sm: 0 1px 2px rgba(28, 28, 31, 0.06);
+  --shadow-md: 0 4px 16px rgba(28, 28, 31, 0.08);
+  --shadow-lg: 0 12px 40px rgba(28, 28, 31, 0.12);
+  --radius: 16px;
+  --radius-sm: 10px;
+  --radius-lg: 22px;
+}
+
+[data-theme="dark"] {
+  --bg: #1C1C1F;
+  --bg-grad-a: #222329;
+  --bg-grad-b: #161619;
+  --surface: #26272D;
+  --surface-2: #2E303A;
+  --surface-inset: #1F2025;
+  --border: rgba(176, 192, 212, 0.13);
+  --border-soft: rgba(176, 192, 212, 0.08);
+  --text: #E0E2E8;
+  --text-2: #B0C0D4;
+  --text-3: #7E8493;
+  --text-muted: #757B89;
+  --primary: #5DA5B3;
+  --primary-strong: #7FC2CF;
+  --primary-soft: rgba(93, 165, 179, 0.22);
+  --accent: #5DA5B3;
+  --accent-soft: rgba(93, 165, 179, 0.18);
+  --sidebar-bg: #161619;
+  --sidebar-text: #8A909C;
+  --sidebar-text-active: #FFFFFF;
+  --sidebar-active-bg: rgba(93, 165, 179, 0.18);
+  --pos: #6FBFAA;
+  --pos-soft: rgba(111, 191, 170, 0.18);
+  --warn: #D7B36C;
+  --warn-soft: rgba(215, 179, 108, 0.16);
+  --danger: #D78576;
+  --danger-soft: rgba(215, 133, 118, 0.16);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.30);
+  --shadow-md: 0 10px 30px rgba(0, 0, 0, 0.42);
+  --shadow-lg: 0 22px 60px rgba(0, 0, 0, 0.52);
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; height: 100%; }
+body {
+  font-family: 'Hanken Grotesk', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+h1, h2, h3, h4 { font-family: 'Space Grotesk', sans-serif; margin: 0; letter-spacing: -0.01em; }
+.num { font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1; }
+.mono-num { font-family: 'Anton', 'Space Grotesk', sans-serif; font-weight: 400 !important; font-variant-numeric: tabular-nums; letter-spacing: 0.01em; }
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 8px; border: 3px solid transparent; background-clip: padding-box; }
+::-webkit-scrollbar-thumb:hover { background: var(--accent); background-clip: padding-box; }
+
+button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; }
+input, select, textarea { font-family: inherit; }
+::selection { background: var(--accent-soft); color: var(--text); }
+
+/* ---- helpers réutilisés par les écrans ---- */
+.page-h1 { font-size: 27px; font-weight: 700; }
+.sub { font-size: 13.5px; color: var(--text-3); margin-top: 4px; }
+.sg { font-family: 'Space Grotesk', sans-serif; }
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+.grid-main { display: grid; grid-template-columns: 1.6fr 1fr; gap: 18px; align-items: start; }
+
+/* champ de formulaire générique */
+.v-input, .v-select, .v-textarea {
+  width: 100%;
+  padding: 11px 14px;
+  border-radius: 11px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  font-size: 13.5px;
+  color: var(--text);
+  outline: none;
+}
+.v-textarea { resize: vertical; font-family: inherit; }
+.v-input:focus, .v-select:focus, .v-textarea:focus { border-color: var(--primary); }
+.v-label { font-size: 12.5px; font-weight: 600; color: var(--text-2); display: block; margin-bottom: 6px; }

@@ -1,0 +1,89 @@
+import { Router } from 'express';
+import { query } from '../db.js';
+
+export const metaRouter = Router();
+
+async function setting<T = any>(key: string): Promise<T | null> {
+  const [row] = await query<{ value: T }>(`SELECT value FROM app_settings WHERE key = $1`, [key]);
+  return row ? row.value : null;
+}
+
+const MONTHS_FR = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
+
+// KPIs + listes pour le tableau de bord — calculés depuis les vraies factures
+metaRouter.get('/dashboard', async (_req, res) => {
+  // Toutes les factures avec leur HT (somme des lignes)
+  const rows = await query<{ id: string; statut: string; issued_on: string | null; tva_rate: string; ht: string }>(
+    `SELECT i.id, i.statut, i.issued_on, i.tva_rate,
+            COALESCE(SUM(l.qty * l.unit_price), 0) AS ht
+       FROM invoices i LEFT JOIN invoice_lines l ON l.invoice_id = i.id
+      GROUP BY i.id`,
+  );
+
+  const ttcOf = (r: any) => Number(r.ht) * (1 + Number(r.tva_rate) / 100);
+  const tvaOf = (r: any) => Number(r.ht) * (Number(r.tva_rate) / 100);
+
+  const paid = rows.filter((r) => r.statut === 'paid');
+  const unpaid = rows.filter((r) => r.statut === 'pending' || r.statut === 'overdue');
+  const overdue = rows.filter((r) => r.statut === 'overdue');
+
+  const now = new Date();
+  const year = now.getFullYear();
+
+  const encaisse = paid.reduce((a, r) => a + ttcOf(r), 0);
+  const caAnnee = paid
+    .filter((r) => r.issued_on && new Date(r.issued_on).getFullYear() === year)
+    .reduce((a, r) => a + ttcOf(r), 0);
+  const enAttente = unpaid.reduce((a, r) => a + ttcOf(r), 0);
+  const tvaCollectee = paid.reduce((a, r) => a + tvaOf(r), 0);
+
+  // Courbe : encaissé (TTC payé) sur les 12 derniers mois
+  const buckets: { key: string; label: string; total: number }[] = [];
+  for (let i = 11; i >= 0; i--) {
+    const d = new Date(year, now.getMonth() - i, 1);
+    buckets.push({ key: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`, label: MONTHS_FR[d.getMonth()], total: 0 });
+  }
+  for (const r of paid) {
+    if (!r.issued_on) continue;
+    const ym = r.issued_on.slice(0, 7);
+    const b = buckets.find((x) => x.key === ym);
+    if (b) b.total += ttcOf(r);
+  }
+
+  const upcoming = await query(
+    `SELECT i.id, i.client_name, i.due_on, i.statut,
+            COALESCE(SUM(l.qty * l.unit_price), 0) AS ht
+       FROM invoices i LEFT JOIN invoice_lines l ON l.invoice_id = i.id
+      WHERE i.statut IN ('pending','overdue')
+      GROUP BY i.id
+      ORDER BY i.due_on ASC NULLS LAST
+      LIMIT 5`,
+  );
+
+  res.json({
+    kpis: {
+      encaisse,
+      caAnnee,
+      enAttente,
+      impayesNb: unpaid.length,
+      retardNb: overdue.length,
+      tvaCollectee,
+      months: buckets.map((b) => b.label),
+      caEncaisse: buckets.map((b) => Math.round(b.total)),
+    },
+    upcoming: upcoming.map((r: any) => ({ ...r, ht: Number(r.ht) })),
+  });
+});
+
+metaRouter.get('/profile', async (_req, res) => {
+  res.json((await setting('profile')) ?? {});
+});
+
+metaRouter.put('/profile', async (req, res) => {
+  await query(
+    `INSERT INTO app_settings (key, value) VALUES ('profile', $1)
+     ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value`,
+    [JSON.stringify(req.body ?? {})],
+  );
+  res.json(req.body ?? {});
+});

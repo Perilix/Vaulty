@@ -1,0 +1,44 @@
+.back { display: inline-flex; align-items: center; gap: 7px; font-size: 13.5px; font-weight: 600; color: var(--text-2); margin-bottom: 18px; }
+.back:hover { color: var(--text); }
+
+.hdr { display: flex; align-items: center; gap: 18px; }
+.hdr-main { flex: 1; min-width: 0; }
+.hdr-top { display: flex; align-items: center; gap: 12px; margin-bottom: 5px; }
+.hdr-top h1 { font-size: 24px; font-weight: 700; }
+.hdr-meta { font-size: 13.5px; color: var(--text-3); display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.hdr-meta span { display: inline-flex; align-items: center; gap: 5px; }
+.hdr-actions { display: flex; gap: 10px; }
+
+.left { display: flex; flex-direction: column; gap: 18px; }
+.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--border);
+  border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+.stat { background: var(--surface); padding: 16px 18px; }
+.s-l { font-size: 11.5px; color: var(--text-3); margin-bottom: 5px; }
+.s-v { font-size: 20px; font-weight: 700; }
+
+.ci-head { padding: 18px 22px; border-bottom: 1px solid var(--border-soft); }
+.ci-head h3 { font-size: 16px; font-weight: 600; }
+table { width: 100%; border-collapse: collapse; }
+tbody tr { cursor: pointer; }
+tbody tr.bordered { border-top: 1px solid var(--border-soft); }
+tbody tr:hover { background: var(--surface-2); }
+td { padding: 13px 22px; font-size: 13.5px; }
+td.r { text-align: right; }
+td.dim { font-size: 13px; color: var(--text-2); }
+td.id { font-weight: 600; }
+td.amt { font-size: 14px; font-weight: 600; }
+.empty { color: var(--text-3); padding: 20px 22px; }
+
+.right { display: flex; flex-direction: column; gap: 18px; }
+.info { display: flex; flex-direction: column; gap: 13px; }
+.ir { display: flex; align-items: center; gap: 11px; color: var(--text-3); }
+.ir-l { font-size: 13px; color: var(--text-3); width: 84px; flex-shrink: 0; }
+.ir-v { font-size: 13.5px; font-weight: 500; color: var(--text); text-align: right; flex: 1; }
+
+.activity { display: flex; flex-direction: column; gap: 2px; }
+.act { display: flex; gap: 12px; padding: 11px 0; }
+.act.bordered { border-top: 1px solid var(--border-soft); }
+.act-ic { width: 34px; height: 34px; border-radius: 9px; flex-shrink: 0; display: grid; place-items: center; }
+.act-body { flex: 1; }
+.act-txt { font-size: 13px; font-weight: 500; }
+.act-date { font-size: 12px; color: var(--text-3); margin-top: 2px; }
