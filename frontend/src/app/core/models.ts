@@ -16,7 +16,7 @@ export interface Client {
   ca: number;
   encours: number;
   factures: number;
-  delai: number;
+  payees: number;
   invoices?: Invoice[];
 }
 

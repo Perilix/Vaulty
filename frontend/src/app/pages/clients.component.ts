@@ -34,7 +34,7 @@ import { euro, toneVar, Client, STATUT_TONE } from '../core/models';
               <div class="metric"><div class="m-l">CA total</div><div class="m-v mono-num">{{ euro(c.ca) }}</div></div>
               <div class="metric"><div class="m-l">Encours</div><div class="m-v mono-num" [style.color]="c.encours > 0 ? toneVar('warn').fg : ''">{{ euro(c.encours) }}</div></div>
               <div class="metric"><div class="m-l">Factures</div><div class="m-v mono-num">{{ c.factures }}</div></div>
-              <div class="metric"><div class="m-l">Délai moyen</div><div class="m-v mono-num">{{ c.delai }} j</div></div>
+              <div class="metric"><div class="m-l">Payées</div><div class="m-v mono-num">{{ c.payees }}</div></div>
             </div>
             <div class="c-actions">
               <v-btn class="block" variant="secondary" size="sm" icon="mail">Relancer</v-btn>

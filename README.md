@@ -89,9 +89,9 @@ Frontend de dev : http://localhost:4200 (crée un compte pour commencer)
 | POST | `/api/auth/login` | connexion (renvoie un JWT) |
 | GET | `/api/dashboard` | KPIs + encaissements à venir |
 | GET/POST | `/api/clients` | liste / création de clients |
-| GET | `/api/clients/:id` | fiche client + ses factures |
+| GET/PUT/DELETE | `/api/clients/:id` | fiche client (+ factures) / modifier / supprimer |
 | GET/POST | `/api/invoices` | liste (filtres `status`,`q`) / création |
-| GET | `/api/invoices/:id` | détail facture + lignes + totaux |
+| GET/PUT/DELETE | `/api/invoices/:id` | détail (+ lignes/totaux) / modifier / supprimer |
 | PATCH | `/api/invoices/:id` | changer le statut (ex: marquer payée) |
 | GET | `/api/invoices/meta/next-number` | prochain numéro de facture |
 | GET/PUT | `/api/profile` | profil entreprise |
